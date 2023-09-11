@@ -1,0 +1,36 @@
+---
+title: "FML Assignment 1"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+date: "2023-09-10"
+---
+
+```{r}
+VAMSHIDATASET <- read.csv("C:/Users/navat/Downloads/FML/Top_1000_IMDb_movies_New_version.csv")
+VAMSHIDATASET
+
+library(ggplot2)
+library(tinytex)
+
+summary(VAMSHIDATASET)
+mean(VAMSHIDATASET$Votes)
+
+#Descriptive statistics for variables
+
+table(VAMSHIDATASET$Watch.Time)
+
+#Transforming Variables
+
+log(VAMSHIDATASET$Metascore.of.movie)
+
+#Plotting Variable
+
+ggplot(VAMSHIDATASET, aes(x = "Watch.Time")) + geom_boxplot(fill = "blue", color = "black") + labs(title = "Plotting of Watch.Time", x = "Watch.Time")
+
+#Plotting Scatterplot
+
+ggplot(VAMSHIDATASET, aes(x = Votes, y = Movie.Rating)) + geom_point() + labs(title = "Scatterplot of MOvie rating to Votes", x = "Votes", y = "Movie.Rating")
+
+```
