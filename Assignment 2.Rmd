@@ -1,0 +1,150 @@
+---
+title: "FML_Assignment_2"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+date: "2023-10-02"
+---
+
+```{r}
+
+#solutions
+
+# Load the required libraries first
+
+library(readr)
+library(caret)
+library(psych)
+
+# And installing required package: ggplot2,lattice
+
+library(class)
+library(dplyr)
+library(FNN)
+ 
+#Read the dataset
+
+mydata <- read.csv("C:/Users/navat/Downloads/UniversalBank.csv")
+
+# Eliminating variables [id & zip code] from the dataset
+
+dataframe<-mydata[, -c(1,5)]
+View(dataframe)
+
+# Creating dummy variable for education
+
+dummy_Edu <- as.data.frame(dummy.code(dataframe$Education))
+
+# Then rename the variable names of dummmy
+
+names(dummy_Edu) <- c("Education_1", "Education_2","Education_3")
+
+# Eliminating education column from the dataset
+
+dataframe_no_edu <- df[,-c(6)] 
+
+Ub_df <- cbind(dataframe_no_edu, dummy_Edu)
+
+names(Ub_df)[8] ="Securities.Account"
+names(Ub_df)[9] ="CD.Account"
+names(Ub_df)[7] ="Personal.Loan"
+View(Ub_df)
+
+# Partitioning the data to 60% Training and 40% Validation
+
+set.seed(1)
+
+training_ind <- sample(row.names(Ub_df),0.6*dim(Ub_df)[1]) 
+testing_ind <- setdiff(row.names(Ub_df), training_ind) 
+training_df <- Ub_df[training_ind, ]
+validation_df <- Ub_df[testing_ind, ]
+
+# Solution 1)
+
+# Creating the new customer data
+new_cust_df = data.frame(Age=40 , Experience=10, Income = 84, Family = 2, CCAvg = 2, Mortgage = 0, Securities.Account = 0, CD.Account = 0, Online = 1,  CreditCard = 1, Education_1 = 0, Education_2 = 1, Education_3 = 0)
+
+# Normalising the data
+
+norm <- preProcess(training_df[, -c(7)], method=c("center", "scale"))
+training_df[, -c(7)] <- predict(norm, training_df[, -c(7)])
+validation_df[, -c(7)] <- predict(norm, validation_df[, -c(7)])
+new_cust_df <- predict(norm, new_cust_df)
+
+# Perform the classification for Knn
+pred_cl <- knn(train = training_df[,-c(7)],test = new_cust_df, cl = training_df[,7], k=1, prob=TRUE)
+knn.attributes <- attributes(pred_cl)
+
+#We will be getting the probability value as 1
+
+knn.attributes[3]
+
+actual= validation_df$Personal.Loan
+
+prediction_prob = attr(pred_cl,"prob")
+mean(pred_cl==actual)
+
+# Solution 2)
+
+accuracy.dataframe <- data.frame(k = seq(1, 60, 1), accuracy = rep(0, 60))
+for(i in 1:60) {
+  prediction <- knn(train = training_df[,-7], test = validation_df[-7],cl = training_df[,7], k = i, prob=TRUE) 
+  accuracy.dataframe[i,2] <- mean(pred_cl==actual)}
+
+View(accuracy.dataframe)
+
+# Solution 3)
+
+set.seed(123)
+pred_cl <- knn(train = training_df[,-7], test = validation_df[,-7],cl = training_df[,7], k = 3, prob=TRUE) 
+confusionMatrix(pred_cl, as.factor(validation_df[,7]))
+     
+# Solution 4)
+
+new_customer_df= data.frame(Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities.Account = 0, CD.Account = 0, Online = 1, CreditCard = 1)
+
+pred_new <- knn(train = training_df[,-7],test = new_customer_df, cl = training_df[,7], k=3, prob=TRUE)
+pred_new
+
+# Solution 5)
+
+set.seed(1)
+training_ind <- sample(rownames(Ub_df), 0.5*dim(Ub_df)[1])
+
+set.seed(1)
+validation_ind <- sample(setdiff(rownames(Ub_df),training_ind), 0.3*dim(Ub_df)[1])
+testing_ind = setdiff(rownames(Ub_df), union(training_ind, validation_ind))
+
+training_df <- Ub_df[training_ind, ]
+validation_df <- Ub_df[validation_ind, ]
+testing_df <- Ub_df[testing_ind, ]
+
+#Normalizing data
+
+norm.values <- preProcess(training_df[, -c(7)], method=c("center", "scale"))
+training_df[, -c(7)] <- predict(norm.values, training_df[, -c(7)])
+validation_df[, -c(7)] <- predict(norm.values, validation_df[, -c(7)])
+testing_df[,-c(7)] <- predict(norm.values, testing_df[,-c(7)])
+
+# Perform kNN on training, testing, validation data
+
+testknn <- knn(train = training_df[,-c(7)],test = testing_df[,-c(7)], cl = training_df[,7], k=3, prob=TRUE)
+
+validknn <- knn(train = training_df[,-c(7)],test = validation_df[,-c(7)], cl = training_df[,7], k=3, prob=TRUE)
+
+trainknn <- knn(train = training_df[,-c(7)],test = training_df[,-c(7)], cl = training_df[,7], k=3, prob=TRUE)
+
+# Calculating confusion matrix
+
+confusionMatrix(testknn, as.factor(testing_df[,7]))
+
+# Confusion Matrix and Statistics
+
+confusionMatrix(validknn, as.factor(validation_df[,7]))
+
+ 
+confusionMatrix(trainknn, as.factor(training_df[,7]))
+
+
+```
